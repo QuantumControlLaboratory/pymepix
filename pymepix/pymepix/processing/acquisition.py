@@ -25,7 +25,9 @@
 from .baseacquisition import AcquisitionPipeline
 from .packetprocessor import PacketProcessor
 from .centroiding import Centroiding
-from .udpsampler import UdpSampler
+from pymepix.processing.udpsampler import UdpSampler
+from pymepix.processing.rawtodisk import raw2Disk
+
 
 
 class PixelPipeline(AcquisitionPipeline):
@@ -41,7 +43,8 @@ class PixelPipeline(AcquisitionPipeline):
         self._use_events = use_event
         self._event_window = (0, 10000)
 
-        self.addStage(0, UdpSampler, address, longtime)
+        self.addStage(0, UdpSampler, address, longtime)  # For parallel: , num_outputs=2
+        self.addStage(1, raw2Disk)  # TODO: to parallelize > create_output=False
         self.addStage(2, PacketProcessor, num_processes=12)
         self._reconfigureProcessor()
 

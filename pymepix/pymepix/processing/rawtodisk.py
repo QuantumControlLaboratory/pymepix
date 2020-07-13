@@ -24,21 +24,26 @@ import multiprocessing
 from multiprocessing.sharedctypes import Value
 import queue
 from pymepix.util.storage import open_output_file, store_raw
+from pymepix.processing.basepipeline import BasePipelineObject
+
 import ctypes
 import subprocess, os
 
-class raw2Disk (multiprocessing.Process, ProcessLogger):
-    def __init__(self, name='raw2Disk', dataq=None, fileN=None):
-        multiprocessing.Process.__init__(self)
-        ProcessLogger.__init__(self, name)
+class raw2Disk (BasePipelineObject):
+    def __init__(self, name='raw2Disk', input_queue=None, file_name='test', create_output=True, num_outputs=1,
+                 shared_output=None):
+        BasePipelineObject.__init__(self, name, input_queue=input_queue, create_output=create_output,
+                                    num_outputs=num_outputs, shared_output=shared_output)
 
         self.info(f'initialising {name}')
-        if dataq is not None:
-            self._dataq = dataq
+        if self.input_queue is not None:
             try:
-                self._raw_file = open_output_file(fileN, 'raw')
+                # TODO: filename from args.output in pymepix
+                # possible: TimepixDevice.setupAcquisition() remove call in init
+                #           > higher level call from pymepix including all args
+                self._raw_file = open_output_file(file_name, 'raw')
             except:
-                self.info(f'Cannot open file {fileN}')
+                self.info(f'Cannot open file {file_name}')
         else:
             self.error('Exception occured in init; no data queue provided?')
 
@@ -46,42 +51,14 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
         self._enable = Value(ctypes.c_bool, 1)
         self._timerBool = Value(ctypes.c_bool, 0)
         self._startTime = Value(ctypes.c_double, 0)
-        self._stopTime  = Value(ctypes.c_double, 1)
+        self._stopTime = Value(ctypes.c_double, 1)
 
-    @property
-    def enable(self):
-        """Enables processing
-
-        Determines wheter the class will perform processing, this has the result of signalling the process to terminate.
-        If there are objects ahead of it then they will stop recieving data
-        if an input queue is required then it will get from the queue before checking processing
-        This is done to prevent the queue from growing when a process behind it is still working
-
-        Parameters
-        -----------
-        value : bool
-            Enable value
-
-
-        Returns
-        -----------
-        bool:
-            Whether the process is enabled or not
-
-
-        """
-        return self._enable.value
-
-    @enable.setter
-    def enable(self, value):
-        self.debug('Setting enabled flag to {}'.format(value))
-        self._enable.value = int(value)
 
     @property
     def timer(self):
         return self._timerBool.value
 
-    @enable.setter
+    @timer.setter
     def timer(self, value):
         self.debug('Setting timer flag to {}'.format(value))
         if value == 1:
@@ -90,43 +67,30 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
             self._stopTime.value = time.time()
         self._timerBool.value = int(value)
 
-    def run(self):
-        print(f'!!!! {__name__} GO!')
-        while True:
-            enabled = self.enable
-            if not enabled:
-                self.debug('I am leaving')
-                break
-            try:
-                # I picked the timeout randomly; use what works
-                data = self._dataq.get(timeout=0.1) # block=False results in high CPU without doing anything
-                #self.debug(f'get data {data}')
-            except queue.Empty:
-                continue  # try again
-            except:
-                self.info('error')
-
-            self._buffer = np.append(self._buffer, data)
-            if len(self._buffer) > 10000:
-                store_raw(self._raw_file, (self._buffer, 1))
-                self._buffer = np.array([], dtype=np.uint64)
-
+    def postRun(self, input_queue):
         # empty buffer before closing
         if len(self._buffer) > 0:
             store_raw(self._raw_file, (self._buffer, 1))
-        #store_raw(self._raw_file, (self._buffer, 1))
+        # store_raw(self._raw_file, (self._buffer, 1))
         # empty queue before closing
-        if not self._dataq.empty():
+        if not input_queue.empty():
             remains = []
-            item = self._dataq.get(block=False)
+            item = input_queue.get(block=False)
             while item:
                 try:
-                    remains.append(self._dataq.get(block=False))
+                    remains.append(input_queue.get(block=False))
                 except queue.Empty:
                     break
             print(f'{len(remains)} remains collected')
             store_raw(self._raw_file, (np.asarray(remains), 1))
         self._raw_file.close()
+
+    def process(self, data_type=None, data=None):
+
+        self._buffer = np.append(self._buffer, data)
+        if len(self._buffer) > 10000:
+            store_raw(self._raw_file, (self._buffer, 1))
+            self._buffer = np.array([], dtype=np.uint64)
 
         # TODO: print only if in debug mode
         #size = np.fromfile(self._raw_file.name, dtype=np.uint64).shape[0]
@@ -138,42 +102,4 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
             self.info(f'start process data from: {self._raw_file.name}')
             # TODO: FLASH specific
             #Popen(['python', '/home/bl1user/timepix/conversionClient.py', self._raw_file.name])
-
-
-def main():
-    import numpy as np
-    from multiprocessing import Queue
-    import logging
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    fname = '/Users/brombh/PycharmProjects/timepix/analysis/data/pyrrole__100.raw'
-    data = np.fromfile(fname, dtype=np.uint64)
-    total = int(np.floor((len(data) - 10) / 10))
-    total = len(data)
-    total = 10005
-    last_progress = 0
-
-    dataq = Queue()
-    fname = 'test.raw'
-    p = raw2Disk(dataq=dataq, fileN=fname)
-    p.start()
-    p.timer = 1
-    # time.sleep(30)
-
-    for i, d in enumerate(data[:(total+1)]):
-        dataq.put(d)
-        progress = int(i / total * 100)
-        if progress != 0 and progress % 5 == 0 and progress != last_progress:
-            print(f'Progress {i / total * 100:.1f}%')
-            last_progress = progress
-        # time.sleep(100e-9)
-    print(f'sent {i+1} packets')
-    time.sleep(2)
-
-    p.timer = 0
-    p.enable = 0
-    p.join()
-
-
-if __name__ == '__main__':
-    main()
+        return None, None

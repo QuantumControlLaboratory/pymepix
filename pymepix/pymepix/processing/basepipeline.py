@@ -160,6 +160,10 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         """Function called before main processing loop, override to """
         pass
 
+    def postRun(self, *args):
+        """Function called after main processing loop, override to """
+        pass
+
     def run(self):
         self.preRun()
         while True:
@@ -192,7 +196,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.error('Exception occured!!!')
                 self.error(e, exc_info=True)
                 break
-
+        self.postRun(self.input_queue)
         self.info('Job complete')
 
 

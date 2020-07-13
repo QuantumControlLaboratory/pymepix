@@ -28,7 +28,6 @@ import time
 
 from .basepipeline import BasePipelineObject
 from .datatypes import MessageType
-from pymepix.processing.rawtodisk import raw2Disk
 
 
 class UdpSampler(BasePipelineObject):
@@ -55,8 +54,6 @@ class UdpSampler(BasePipelineObject):
             self._bufferlength = 0
             self._total_time = 0.0
             self._longtime = longtime
-            self._dataq = Queue()
-            self._record = Value(ctypes.c_bool, 0)
             self._outfile_name = 'test'
         except Exception as e:
             self.error('Exception occured in init!!!')
@@ -83,44 +80,6 @@ class UdpSampler(BasePipelineObject):
         tpx_filter = pix_filter | trig_filter
         tpx_packets = packet[tpx_filter]
         return tpx_packets
-
-    @property
-    def record(self):
-        """Enables saving data to disk
-
-        Determines whether the class will perform processing, this has the result of signalling the process to terminate.
-        If there are objects ahead of it then they will stop recieving data
-        if an input queue is required then it will get from the queue before checking processing
-        This is done to prevent the queue from growing when a process behind it is still working
-
-        Parameters
-        -----------
-        value : bool
-            Enable value
-
-        Returns
-        -----------
-        bool:
-            Whether the process should record and write to disk or not
-        """
-        return bool(self._record.value)
-
-    @record.setter
-    def record(self, value):
-        self.debug(f'Setting record flag to {value}')
-        self._record.value = int(value)
-
-    @property
-    def outfile_name(self):
-        return self._outfile_name
-
-    @outfile_name.setter
-    def outfile_name(self, fileN):
-        self.info(f'Setting file name flag to {fileN}')
-        # start raw2Disk
-        self._outfile_name = fileN
-        self.stopRaw2Disk()
-        self.startRaw2Disk()
 
     def process(self, data_type=None, data=None):
         start = time.time()
@@ -154,29 +113,8 @@ class UdpSampler(BasePipelineObject):
             self._bufferlength = 0
             self._last_update = time.time()
             if packet.size > 0:
-                if self.record:
-                    self._dataq.put(packet)
                 return MessageType.RawData, (packet, self._longtime.value)
             else:
                 return None, None
         else:
             return None, None
-
-    def startRaw2Disk(self):
-        self.info(f'start raw2Disk process')
-
-        # generate worker to save the data directly to disk
-        self._raw2Disk = raw2Disk(dataq=self._dataq, fileN=self.outfile_name)
-        self._raw2Disk.enable = True
-        self._raw2Disk.start()
-
-    def stopRaw2Disk(self):
-        self.info(f'stopping raw2Disk process')
-        self._raw2Disk.enable = False
-        self._raw2Disk.join(5.0)  # give it a chance to empty some more of the queue
-        self._raw2Disk.terminate()
-        self._raw2Disk.join()
-
-        while not self._dataq.empty():
-            self._dataq.get()
-        self.info('Process Raw2Disk stop complete')
