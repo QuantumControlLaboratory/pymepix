@@ -30,7 +30,7 @@ import ctypes
 import subprocess, os
 
 class raw2Disk (BasePipelineObject):
-    def __init__(self, name='raw2Disk', input_queue=None, file_name='test', create_output=True, num_outputs=1,
+    def __init__(self, name='raw2Disk', input_queue=None, file_name='test', create_output=False, num_outputs=1,
                  shared_output=None):
         BasePipelineObject.__init__(self, name, input_queue=input_queue, create_output=create_output,
                                     num_outputs=num_outputs, shared_output=shared_output)

@@ -43,8 +43,8 @@ class PixelPipeline(AcquisitionPipeline):
         self._use_events = use_event
         self._event_window = (0, 10000)
 
-        self.addStage(0, UdpSampler, address, longtime)  # For parallel: , num_outputs=2
-        self.addStage(1, raw2Disk)  # TODO: to parallelize > create_output=False
+        self.addStage(0, UdpSampler, address, longtime, num_outputs=2)
+        self.addStage(1, raw2Disk)
         self.addStage(2, PacketProcessor, num_processes=12)
         self._reconfigureProcessor()
 
@@ -117,6 +117,20 @@ class PixelPipeline(AcquisitionPipeline):
                 p.minWindow = min_win
                 p.maxWindow = max_win
 
+    def start(self):
+        """Starts all stages"""
+
+        self._buildStages()
+
+        # manually handling the prallelism for packetprocessor and raw2disk
+        q = self._stages[0].outputQueue[-1]
+        if 2 == len(self._stages) - 1:
+            out = self._data_queue
+        else:
+            out = None
+        self._stages[2].build(input_queue=q, output_queue=out)
+
+        self._startStages()
 
 class CentroidPipeline(PixelPipeline):
     """A Pixel pipeline that includes centroiding

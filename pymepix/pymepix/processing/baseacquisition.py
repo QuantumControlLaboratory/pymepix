@@ -122,11 +122,16 @@ class AcquisitionStage(Logger):
         self._output_queue = output_queue
 
         self.debug('Building stage with arguments {} {}'.format(self._args, self._kwargs))
-
-        if self._output_queue is None:
+        '''
+        if self._output_queue is None: 
+            # problem: whenever there is a process that is supposed to have more outputs,
+            #          from this point on it won't be possible anymore as multiple outputs are only generated
+            #          if there is no shared output
             self.debug('I am creating the queue')
             self._output_queue = Queue()
         else:
+        '''
+        if self._output_queue is not None:
             self.debug('Recieved the queue {}'.format(output_queue))
         self.debug('Building stage {} '.format(self._stage_number))
         self.info('Creating {} processes'.format(self._num_processes))
@@ -137,7 +142,7 @@ class AcquisitionStage(Logger):
             p.daemon = True
             self._pipeline_objects.append(p)
             if self._output_queue is None:
-                self._output_queue = p.outputQueues()[-1]
+                self._output_queue = p.outputQueues
 
     @property
     def outputQueue(self):
@@ -206,19 +211,17 @@ class AcquisitionPipeline(Logger):
     def stages(self):
         return self._stages
 
-    def start(self):
-        """Starts all stages"""
-        # Sort them by stage number
-
-        self.info('Starting acquisition')
-        # Build them
+    def _buildStages(self):
         last_stage = None
         last_index = len(self._stages) - 1
         self.debug('Last index is {}'.format(last_index))
         for idx, s in enumerate(self._stages):
             self.debug('Building stage {} {}'.format(idx, s.stage))
-            if last_stage != None:
-                queues = last_stage.outputQueue
+            if last_stage is not None:
+                if last_stage.outputQueue is not None and len(last_stage.outputQueue) > 0:
+                    queues = last_stage.outputQueue[0]
+                else:
+                    queues = None
                 self.debug('Queues: {}'.format(queues))
                 if idx != last_index:
                     s.build(input_queue=queues)
@@ -234,10 +237,19 @@ class AcquisitionPipeline(Logger):
             last_stage = s
             self.debug('Last stage is {}'.format(s))
 
+    def _startStages(self):
+        self.info('Starting acquisition')
         for s in self._stages:
             s.enable = True
             s.start()
         self._running = True
+
+    def start(self):
+        """Starts all stages"""
+
+        self._buildStages()
+
+        self._startStages()
 
     @property
     def isRunning(self):
