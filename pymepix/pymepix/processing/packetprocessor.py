@@ -110,7 +110,7 @@ class PacketProcessor(BasePipelineObject):
     def preRun(self):
         self.info('Running with triggers? {}'.format(self._handle_events))
 
-    def process(self, data_type, data):
+    def process(self, data_type=None, data=None):
         if data_type is not MessageType.RawData:
             return None, None
 

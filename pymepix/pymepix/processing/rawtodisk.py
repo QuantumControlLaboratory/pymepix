@@ -67,18 +67,19 @@ class raw2Disk (BasePipelineObject):
             self._stopTime.value = time.time()
         self._timerBool.value = int(value)
 
-    def postRun(self, input_queue):
+    def postRun(self):
         # empty buffer before closing
         if len(self._buffer) > 0:
             store_raw(self._raw_file, (self._buffer, 1))
         # store_raw(self._raw_file, (self._buffer, 1))
         # empty queue before closing
-        if not input_queue.empty():
+        if not self.input_queue.empty():
+
             remains = []
-            item = input_queue.get(block=False)
+            item = self.input_queue.get(block=False)
             while item:
                 try:
-                    remains.append(input_queue.get(block=False))
+                    remains.append(self.input_queue.get(block=False))
                 except queue.Empty:
                     break
             print(f'{len(remains)} remains collected')
