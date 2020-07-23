@@ -36,15 +36,21 @@ class PixelPipeline(AcquisitionPipeline):
         This class can be used as a base for all acqusition pipelines.
     """
 
-    def __init__(self, data_queue, address, longtime, use_event=False, name='Pixel'):
+    def __init__(self, data_queue, address, longtime, use_event=False, name='Pixel', parallel=False):
         AcquisitionPipeline.__init__(self, name, data_queue)
         self.info('Initializing Pixel pipeline')
         self._use_events = use_event
         self._event_window = (0, 10000)
 
-        self.addStage(0, UdpSampler, address, longtime, num_outputs=2)
-        self.addStage(1, raw2Disk)
+        self.run_parallel = parallel
+        if self.run_parallel:
+            self.addStage(0, UdpSampler, address, longtime, num_outputs=2)
+            self.addStage(1, raw2Disk, create_output=False)
+        else:
+            self.addStage(0, UdpSampler, address, longtime)
+            self.addStage(1, raw2Disk)
         self.addStage(2, PacketProcessor, num_processes=12)
+
         self._reconfigureProcessor()
 
     def _reconfigureProcessor(self):
@@ -122,12 +128,13 @@ class PixelPipeline(AcquisitionPipeline):
         self._buildStages()
 
         # manually handling the prallelism for packetprocessor and raw2disk
-        q = self._stages[0].outputQueue[-1]
-        if 2 == len(self._stages) - 1:
-            out = self._data_queue
-        else:
-            out = None
-        self._stages[2].build(input_queue=q, output_queue=out)
+        if self.run_parallel:
+            q = self._stages[0].outputQueue[-1]
+            if 2 == len(self._stages) - 1:
+                out = self._data_queue
+            else:
+                out = None
+            self._stages[2].build(input_queue=q, output_queue=out)
 
         self._startStages()
 
@@ -140,8 +147,8 @@ class CentroidPipeline(PixelPipeline):
 
     """
 
-    def __init__(self, data_queue, address, longtime):
-        PixelPipeline.__init__(self, data_queue, address, longtime, use_event=True, name='Centroid')
+    def __init__(self, data_queue, address, longtime, parallel=False):
+        PixelPipeline.__init__(self, data_queue, address, longtime, use_event=True, name='Centroid', parallel=parallel)
         self.info('Initializing Centroid pipeline')
         self._skip_centroid = 1
         self._tot_threshold = 0

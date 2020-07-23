@@ -75,7 +75,7 @@ class TimepixDevice(Logger):
         self._device.reinitDevice()
 
         self._longtime = Value('L', 0)
-        self.setupAcquisition(PixelPipeline)
+        self.setupAcquisition(PixelPipeline, parallel=False)
 
         self._initDACS()
 
