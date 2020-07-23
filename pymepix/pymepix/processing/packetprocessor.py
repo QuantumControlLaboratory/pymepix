@@ -297,7 +297,7 @@ class PacketProcessor(BasePipelineObject):
 
         self.pushOutput(MessageType.PixelData, (x, y, finalToA, ToT))
 
-        # print('PIXEL',finalToA,longtime)
+        # print('PIXEL', finalToA, longtime)
         if self._handle_events:
             if self._x is None:
                 self._x = x

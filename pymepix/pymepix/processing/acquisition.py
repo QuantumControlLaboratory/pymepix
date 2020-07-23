@@ -29,7 +29,6 @@ from pymepix.processing.udpsampler import UdpSampler
 from pymepix.processing.rawtodisk import raw2Disk
 
 
-
 class PixelPipeline(AcquisitionPipeline):
     """ An acquisition pipeline that includes the udpsampler and pixel processor
 

@@ -232,7 +232,7 @@ class Pymepix(Logger):
     def stop(self):
         """Stops acquisition"""
 
-        if self._running == False:
+        if not self._running:
             return
         self.info('Stopping acquisition')
         trig_mode = 0
