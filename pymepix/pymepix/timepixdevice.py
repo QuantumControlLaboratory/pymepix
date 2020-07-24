@@ -75,6 +75,9 @@ class TimepixDevice(Logger):
         self._device.reinitDevice()
 
         self._longtime = Value('L', 0)
+
+        # the parallel option yields udpsampler > (rawtodisk || packetprocessor)
+        #                instead of   udpsampler > rawtodisk > packetprocessor
         self.setupAcquisition(PixelPipeline, parallel=False)
 
         self._initDACS()

@@ -45,10 +45,10 @@ class PixelPipeline(AcquisitionPipeline):
         self.run_parallel = parallel
         if self.run_parallel:
             self.addStage(0, UdpSampler, address, longtime, num_outputs=2)
-            self.addStage(1, raw2Disk, create_output=False)
+            self.addStage(1, raw2Disk, create_output=False, propagate_input=False)
         else:
             self.addStage(0, UdpSampler, address, longtime)
-            self.addStage(1, raw2Disk)
+            self.addStage(1, raw2Disk, create_output=True, propagate_input=True)
         self.addStage(2, PacketProcessor, num_processes=12)
 
         self._reconfigureProcessor()
