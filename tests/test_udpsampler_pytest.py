@@ -26,6 +26,7 @@ import socket
 import ctypes
 import time
 import numpy as np
+import zmq
 from multiprocessing.sharedctypes import Value
 from multiprocessing import Queue
 from pymepix.processing.udpsampler import UdpSampler
@@ -174,6 +175,16 @@ def test_queue():
     t.join()
     print('Done')
 
+def test_zmq():
+    context = zmq.Context()
+    receiver = context.socket(zmq.PULL)
+    receiver.connect("tcp://127.0.0.1:60000")
+
+    while True:
+        print(receiver.recv())
+        time.sleep(0.1)
+
+
 
 if __name__ == "__main__":
-    test_queue()
+    test_zmq()

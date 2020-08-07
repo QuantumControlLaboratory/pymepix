@@ -77,6 +77,8 @@ class UdpSampler(BasePipelineObject):
         self._last_update = time.time()
 
     def post_run(self):
+        pass
+        '''
         if len(self._packet_buffer) > 1:
             packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
         else:
@@ -87,6 +89,7 @@ class UdpSampler(BasePipelineObject):
             return MessageType.RawData, (packet, self._longtime.value)
         else:
             return None, None
+        '''
 
     def get_useful_packets(self, packet):
         # Get the header
@@ -158,18 +161,22 @@ class UdpSampler(BasePipelineObject):
         flush_time = end - self._last_update
 
         if (self._recv_bytes > self._chunk_size) or (flush_time > self._flush_timeout):
-            packet = np.frombuffer(self._packet_buffer_view[:self._recv_bytes], dtype=np.uint64)
+            #packet = np.frombuffer(self._packet_buffer_view[:self._recv_bytes], dtype=np.uint64)
 
             # tpx_packets = self.get_useful_packets(packet)
 
+            recv_bytes = self._recv_bytes
             self._recv_bytes = 0
             self._last_update = time.time()
-            if packet.size > 0:
-                if self.record:
-                    self._dataq.put(packet)
-                return MessageType.RawData, (packet, self._longtime.value)
-            else:
-                return None, None
+            #if packet.size > 0:
+            #if self._recv_bytes > 0:
+            #    '''
+            #    if self.record:
+            #        self._dataq.put(packet)
+            #    '''
+            return MessageType.RawData, (self._packet_buffer_view[:recv_bytes], self._longtime.value)
+            #else:
+            #    return None, None
         else:
             return None, None
 

@@ -266,7 +266,7 @@ def main():
     from multiprocessing.sharedctypes import Value
     import threading
     # Create the logger
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     end_queue = Queue()
 
     acqpipline = AcquisitionPipeline('Test', end_queue)
@@ -274,17 +274,17 @@ def main():
     test_value = Value('I', 0)
 
     acqpipline.addStage(0, UdpSampler, ('127.0.0.1', 50000), test_value)
-    acqpipline.addStage(2, PacketProcessor, num_processes=4)
+    #acqpipline.addStage(2, PacketProcessor, num_processes=4)
 
     def get_queue_thread(queue):
         recieved = []
         while True:
             value = queue.get()
-            #messType, data = value
-            #recieved.append(value[1])
-            #print(value)
             if value is None:
                 break
+            #messType, data = value
+            #recieved.append(value[1])
+            print(value)
 
     t = threading.Thread(target=get_queue_thread, args=(end_queue,))
     t.daemon = True

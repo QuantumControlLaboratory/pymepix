@@ -28,6 +28,7 @@ from multiprocessing import Queue
 import traceback
 from multiprocessing.sharedctypes import Value
 import time
+import zmq
 
 
 class BasePipelineObject(multiprocessing.Process, ProcessLogger):
@@ -77,7 +78,11 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.debug('Queue {} is a list', )
                 self.output_queue.extend(shared_output)
             else:
-                self.output_queue.append(shared_output)
+                #self.output_queue.append(shared_output)
+                self.context = zmq.Context()
+                self.zmq_socket = self.context.socket(zmq.PUSH)
+                self.zmq_socket.bind(f"tcp://127.0.0.1:60001")
+                self.zmq_socket.send(b'3')
         elif create_output:
             self.debug('Creating Queue')
             for x in range(num_outputs):
@@ -138,9 +143,14 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
 
         """
         # self.debug('Pushing output {} {} to {}'.format(data_type,data,self.output_queue))
+        '''
         for x in self.output_queue:
             if x is not None:
                 x.put((data_type, data))
+        '''
+        #self.zmq_socket.send(data)
+        self.debug('pushing')
+        self.zmq_socket.send(b'3')
 
     def process(self, data_type=None, data=None):
         """Main processing function, override this do perform work
@@ -148,9 +158,6 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         To perform work within the pipeline, a class must override this function.
         General guidelines include, check for correct data type, and must return
         None for both if no output is given.
-
-
-
         """
         self.debug('I AM PROCESSING')
         time.sleep(0.1)
@@ -196,11 +203,12 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.error('Exception occured!!!')
                 self.error(e, exc_info=True)
                 break
+        # TODO: test this post_run again!
+        '''
         output_type, result = self.post_run()
         if output_type is not None and result is not None: # not quite sure what happens without "enabled"
             self.pushOutput(output_type, result)
-
-
+        '''
         self.info('Job complete')
 
 
