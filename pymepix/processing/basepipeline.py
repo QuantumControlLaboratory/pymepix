@@ -64,28 +64,18 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         """
         return True
 
-    ctx = None
-    zmq_socket = None
     def __init__(self, name, input_queue=None, create_output=True, num_outputs=1, shared_output=None,
                  propogate_input=True):
         ProcessLogger.__init__(self, name)
         multiprocessing.Process.__init__(self)
-        self.input_queue = input_queue
 
-        self.output_queue = []
-        self._propgate_input = propogate_input
-        if shared_output is not None:
-            self.debug('Queue is shared')
-            if type(shared_output) is list:
-                self.debug('Queue {} is a list', )
-                self.output_queue.extend(shared_output)
-            else:
-                #self.output_queue.append(shared_output)
-                pass
-        elif create_output:
-            self.debug('Creating Queue')
-            for x in range(num_outputs):
-                self.output_queue.append(Queue())
+        self.conn_settings = {'input_queue': input_queue,
+                              'output_queue': [],
+                              'propgate_input': propogate_input,
+                              'shared_output': shared_output,
+                              'num_outputs': num_outputs,
+                              'create_output': create_output
+                              }
         self._enable = Value('I', 1)
 
     @property
@@ -167,9 +157,24 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         pass
 
     def init_connection(self):
-        self.ctx = zmq.Context.instance()
-        self.zmq_socket = self.ctx.socket(zmq.PUSH)
-        self.zmq_socket.bind(f"tcp://127.0.0.1:60000")
+        """Establish ZMQ connections for processing stages"""
+        if self.conn_settings['shared_output'] is not None:
+            self.debug('Queue is shared')
+            if type(self.conn_settings['shared_output']) is list:
+                self.debug('Queue {} is a list', )
+                self.output_queue.extend(self.conn_settings['shared_output'])
+            else:
+                #self.output_queue.append(shared_output)
+                self.debug('####################### ZMQ')
+                self.ctx = zmq.Context.instance()
+                self.zmq_socket = self.ctx.socket(zmq.PUSH)
+                self.zmq_socket.bind(f"tcp://127.0.0.1:60000")
+        elif self.conn_settings['create_output']:
+            self.debug('Creating Queue')
+            for x in range(self.conn_settings['num_outputs']):
+                self.output_queue.append(Queue())
+
+
 
     def post_run(self):
         """Function called after main processing loop, override to """
@@ -181,7 +186,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         while True:
             enabled = self.enable
             try:
-                if self.input_queue is not None:
+                if self.conn_settings['input_queue'] is not None:
                     self.debug('Getting value from input queue')
                     value = self.input_queue.get()
 
@@ -203,7 +208,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                         self.debug('I AM LEAVING')
                         break
                 if output_type is not None and result is not None and enabled:
-                    self.zmq_socket.send(b'3')
+                    self.zmq_socket.send_pyobj((output_type, result))
                     #self.pushOutput(output_type, result)
             except Exception as e:
                 self.error('Exception occured!!!')

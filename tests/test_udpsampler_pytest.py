@@ -180,8 +180,9 @@ def test_zmq():
     receiver = context.socket(zmq.PULL)
     receiver.connect("tcp://127.0.0.1:60000")
 
-    while True:
-        print(receiver.recv())
+    for i in range(100):
+        output_type, result = receiver.recv_pyobj()
+        print(output_type, result)
         time.sleep(0.1)
 
 

@@ -174,7 +174,7 @@ class UdpSampler(BasePipelineObject):
             #    if self.record:
             #        self._dataq.put(packet)
             #    '''
-            return MessageType.RawData, (self._packet_buffer_view[:recv_bytes], self._longtime.value)
+            return MessageType.RawData, (self._packet_buffer_view[:recv_bytes].tobytes(), self._longtime.value)
             #else:
             #    return None, None
         else:
