@@ -64,6 +64,8 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         """
         return True
 
+    ctx = None
+    zmq_socket = None
     def __init__(self, name, input_queue=None, create_output=True, num_outputs=1, shared_output=None,
                  propogate_input=True):
         ProcessLogger.__init__(self, name)
@@ -79,10 +81,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.output_queue.extend(shared_output)
             else:
                 #self.output_queue.append(shared_output)
-                self.context = zmq.Context()
-                self.zmq_socket = self.context.socket(zmq.PUSH)
-                self.zmq_socket.bind(f"tcp://127.0.0.1:60001")
-                self.zmq_socket.send(b'3')
+                pass
         elif create_output:
             self.debug('Creating Queue')
             for x in range(num_outputs):
@@ -167,11 +166,17 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         """Function called before main processing loop, override to """
         pass
 
+    def init_connection(self):
+        self.ctx = zmq.Context.instance()
+        self.zmq_socket = self.ctx.socket(zmq.PUSH)
+        self.zmq_socket.bind(f"tcp://127.0.0.1:60000")
+
     def post_run(self):
         """Function called after main processing loop, override to """
         return None, None
 
     def run(self):
+        self.init_connection()
         self.pre_run()
         while True:
             enabled = self.enable
@@ -198,7 +203,8 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                         self.debug('I AM LEAVING')
                         break
                 if output_type is not None and result is not None and enabled:
-                    self.pushOutput(output_type, result)
+                    self.zmq_socket.send(b'3')
+                    #self.pushOutput(output_type, result)
             except Exception as e:
                 self.error('Exception occured!!!')
                 self.error(e, exc_info=True)
