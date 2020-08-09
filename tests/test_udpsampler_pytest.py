@@ -29,8 +29,6 @@ import numpy as np
 import zmq
 from multiprocessing.sharedctypes import Value
 from multiprocessing import Queue
-from pymepix.processing.udpsampler import UdpSampler
-from pymepix.processing.acquisition import AcquisitionPipeline
 
 address = ('127.0.0.1', 50000)
 
@@ -176,14 +174,55 @@ def test_queue():
     print('Done')
 
 def test_zmq():
-    context = zmq.Context()
-    receiver = context.socket(zmq.PULL)
-    receiver.connect("tcp://127.0.0.1:60000")
+    import socket
+    import multiprocessing
+    from multiprocessing.sharedctypes import Value
+    import threading
+    from pymepix.processing.udpsampler import UdpSampler
+    from pymepix.processing.acquisition import AcquisitionPipeline
 
-    for i in range(100):
-        output_type, result = receiver.recv_pyobj()
-        print(output_type, result)
-        time.sleep(0.1)
+    # Create the logger
+    import logging
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    def send_proc(): # process for sending data to UdpSampler
+        time.sleep(1)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        for i in range(100):
+            print(f'sending: {i}')
+            sock.sendto(bytes(10), address)
+            time.sleep(0.01)
+
+    def recv_udpsampler_data():
+        context = zmq.Context()
+        receiver = context.socket(zmq.PULL)
+        receiver.connect("tcp://127.0.0.1:60000")
+
+        for i in range(10):
+            output_type, result = receiver.recv_pyobj()
+            print('received from UDPsampler:')
+            print(output_type, result)
+            #time.sleep(0.1)
+        context.term()
+
+
+    # create acquisition pipeline
+    test_value = Value('I', 0)
+    acqpipline = AcquisitionPipeline('Test', None)
+    acqpipline.addStage(0, UdpSampler, address, test_value)
+    acqpipline.start()
+
+    # start sending process
+    multiprocessing.Process(target=send_proc).start()
+
+    # start receiving thread
+    t = threading.Thread(target=recv_udpsampler_data)
+    t.daemon = True
+    t.start()
+
+    time.sleep(10)
+    acqpipline.stop()
+    print('Done')
 
 
 
