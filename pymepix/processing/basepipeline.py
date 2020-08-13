@@ -65,7 +65,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         return True
 
     def __init__(self, name, input_queue=None, create_output=True, num_outputs=1, shared_output=None,
-                 propogate_input=True):
+                 propogate_input=True, addr_in=None, addr_out=None):
         ProcessLogger.__init__(self, name)
         multiprocessing.Process.__init__(self)
 
@@ -74,7 +74,9 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                               'propgate_input': propogate_input,
                               'shared_output': shared_output,
                               'num_outputs': num_outputs,
-                              'create_output': create_output
+                              'create_output': create_output,
+                              'addr_in': addr_in,
+                              'addr_out': addr_out
                               }
         self._enable = Value('I', 1)
 
@@ -158,6 +160,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
 
     def init_connection(self):
         """Establish ZMQ connections for processing stages"""
+        '''
         if self.conn_settings['shared_output'] is not None:
             self.debug('Queue is shared')
             if type(self.conn_settings['shared_output']) is list:
@@ -168,11 +171,21 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.debug('####################### ZMQ')
                 self.ctx = zmq.Context.instance()
                 self.zmq_socket = self.ctx.socket(zmq.PUSH)
-                self.zmq_socket.bind(f"tcp://127.0.0.1:60000")
+                self.zmq_socket.bind(self.conn_settings['addr_out'])
         elif self.conn_settings['create_output']:
             self.debug('Creating Queue')
             for x in range(self.conn_settings['num_outputs']):
                 self.output_queue.append(Queue())
+        '''
+        if self.conn_settings['addr_in'] is not None:
+            self.ctx = zmq.Context.instance()
+            self.zmq_socket = self.ctx.socket(zmq.PULL)
+            self.zmq_socket.bind(self.conn_settings['addr_in'])
+        if self.conn_settings['addr_out'] is not None:
+            self.ctx = zmq.Context.instance()
+            self.zmq_socket = self.ctx.socket(zmq.PUSH)
+            self.zmq_socket.bind(self.conn_settings['addr_out'])
+
 
 
 
