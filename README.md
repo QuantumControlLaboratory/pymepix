@@ -1,3 +1,5 @@
+feature branch to implement ZMQ pipeline engine
+
 # Pymepix
 
 The `pymepix` Python module provides the control and data-acquisition (DAQ) functionality. It
