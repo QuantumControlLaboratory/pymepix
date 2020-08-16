@@ -301,7 +301,6 @@ class TimepixDevice(Logger):
             self._acq_running = True
 
     def stop(self):
-
         if self._acq_running:
             self.info('Stopping acquisition')
             if self._acquisition_pipeline is not None:

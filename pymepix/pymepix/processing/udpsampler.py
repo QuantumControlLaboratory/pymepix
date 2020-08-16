@@ -36,8 +36,6 @@ class UdpSampler(BasePipelineObject):
     This class, creates a UDP socket connection to SPIDR and recivies the UDP packets from Timepix
     It them pre-processes them and sends them off for more processing
 
-
-
     """
 
     def __init__(self, address, longtime, chunk_size=1000, flush_timeout=0.3, input_queue=None, create_output=True,
@@ -68,7 +66,7 @@ class UdpSampler(BasePipelineObject):
         self.info('Establishing connection to : {}'.format(address))
         self._sock.bind(address)
 
-    def preRun(self):
+    def pre_run(self):
         self._last_update = time.time()
 
     def get_useful_packets(self, packet):

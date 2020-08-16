@@ -156,16 +156,16 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
         time.sleep(0.1)
         return None, None
 
-    def preRun(self):
+    def pre_run(self):
         """Function called before main processing loop, override to """
         pass
 
-    def postRun(self):
+    def post_run(self):
         """Function called after main processing loop, override to """
         pass
 
     def run(self):
-        self.preRun()
+        self.pre_run()
         while True:
             enabled = self.enable
             try:

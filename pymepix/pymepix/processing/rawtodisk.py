@@ -68,14 +68,13 @@ class raw2Disk (BasePipelineObject):
             self._stopTime.value = time.time()
         self._timerBool.value = int(value)
 
-    def postRun(self):
+    def post_run(self):
         # empty buffer before closing
         if len(self._buffer) > 0:
             store_raw(self._raw_file, (self._buffer, 1))
         # store_raw(self._raw_file, (self._buffer, 1))
         # empty queue before closing
         if not self.input_queue.empty():
-
             remains = []
             item = self.input_queue.get(block=False)
             while item:
@@ -88,7 +87,6 @@ class raw2Disk (BasePipelineObject):
         self._raw_file.close()
 
     def process(self, data_type=None, data=None):
-
         self._buffer = np.append(self._buffer, data)
         if len(self._buffer) > 10000:
             store_raw(self._raw_file, (self._buffer, 1))
