@@ -164,7 +164,7 @@ class AcquisitionStage(Logger):
                 p.terminate()
                 p.join()
                 self.info('Process stop complete')
-            if self._input_queue.get() is not None:
+            if not self._input_queue.empty() and self._input_queue.get(block=False) is not None:
                 self.error('Queue should only contain None!!')
                 raise Exception('Queue contains more data')
             self._input_queue.close()

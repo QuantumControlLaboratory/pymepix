@@ -69,6 +69,14 @@ class UdpSampler(BasePipelineObject):
     def pre_run(self):
         self._last_update = time.time()
 
+    def post_run(self):
+        if len(self._packet_buffer) > 1:
+            packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
+        else:
+            packet = np.frombuffer(self._packet_buffer[0], dtype=np.uint64)
+
+        self.pushOutput(MessageType.RawData, (packet, self._longtime.value))
+
     def get_useful_packets(self, packet):
         # Get the header
         header = ((packet & 0xF000000000000000) >> 60) & 0xF
@@ -103,7 +111,10 @@ class UdpSampler(BasePipelineObject):
         flush_time = end - self._last_update
 
         if (self._bufferlength > self._chunk_size) or (flush_time > self._flush_timeout):
-            packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
+            if len(self._packet_buffer) > 1:
+                packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
+            else:
+                packet = np.frombuffer(self._packet_buffer[0], dtype=np.uint64)
 
             # tpx_packets = self.get_useful_packets(packet)
 

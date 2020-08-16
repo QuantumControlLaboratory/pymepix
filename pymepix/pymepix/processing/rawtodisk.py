@@ -79,7 +79,8 @@ class raw2Disk (BasePipelineObject):
             item = self.input_queue.get(block=False)
             while item:
                 try:
-                    remains.append(self.input_queue.get(block=False))
+                    remains.append(item)
+                    item = self.input_queue.get(block=False)
                 except queue.Empty:
                     break
             print(f'{len(remains)} remains collected')
@@ -87,16 +88,16 @@ class raw2Disk (BasePipelineObject):
         self._raw_file.close()
 
     def process(self, data_type=None, data=None):
-        self._buffer = np.append(self._buffer, data)
+        self._buffer = np.append(self._buffer, data[0])
         if len(self._buffer) > 10000:
             store_raw(self._raw_file, (self._buffer, 1))
             self._buffer = np.array([], dtype=np.uint64)
 
         # TODO: print only if in debug mode
-        #size = np.fromfile(self._raw_file.name, dtype=np.uint64).shape[0]
-        #timeDiff = self._stopTime.value - self._startTime.value
-        #print(f'recieved {size} packets; {64 * size * 1e-6:.2f}MBits {(64 * size * 1e-6) / timeDiff:.2f}MBits/sec; {(64 * size * 1e-6 / 8) / timeDiff:.2f}MByte/sec')
-        self.info("finished saving data")
+        # size = np.fromfile(self._raw_file.name, dtype=np.uint64).shape[0]
+        # timeDiff = self._stopTime.value - self._startTime.value
+        # print(f'recieved {size} packets; {64 * size * 1e-6:.2f}MBits {(64 * size * 1e-6) / timeDiff:.2f}MBits/sec; {(64 * size * 1e-6 / 8) / timeDiff:.2f}MByte/sec')
+        self.debug("finished saving data")
         if os.path.getsize(self._raw_file.name) > 0:
             from subprocess import Popen
             self.info(f'start process data from: {self._raw_file.name}')

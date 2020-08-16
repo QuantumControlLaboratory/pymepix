@@ -196,7 +196,7 @@ class BasePipelineObject(multiprocessing.Process, ProcessLogger):
                 self.error('Exception occured!!!')
                 self.error(e, exc_info=True)
                 break
-        self.postRun()
+        self.post_run()
         self.info('Job complete')
 
 
