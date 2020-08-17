@@ -55,11 +55,9 @@ def receive_and_process(parallel):
     else:
         acqpipeline_seq = PixelPipeline(data_queue=q, longtime=l, address=ADDRESS, parallel=False)
     acqpipeline_seq.start()
-
     send_data()
 
     fname = acqpipeline_seq._stages[1]._pipeline_objects[0]._raw_file.name
-    print(fname)
     acqpipeline_seq.stop()
     return fname
 
@@ -88,6 +86,9 @@ def send_data():
         packet = struct.pack('%sQ' % size, *a)
         sock.sendto(packet, ADDRESS)
         time.sleep(0.1)
+    a = data[((i + 1) * size):]
+    packet = struct.pack('%sQ' % size, *a)
+    sock.sendto(packet, ADDRESS)
 
 
 def test_compare_input_output():
@@ -129,5 +130,19 @@ def test_compare_raw_output():
 
 
 if __name__ == "__main__":
-    test_compare_input_output()
-    test_compare_raw_output()
+    err = 0
+    max = 10
+    for _ in range(max):
+        try:
+            test_compare_input_output()
+        except AssertionError:
+            err += 1
+    print(f"input output compare got {max - err} out of {max} correct")
+
+    err = 0
+    for _ in range(max):
+        try:
+            test_compare_raw_output()
+        except AssertionError:
+            err += 1
+    print(f"output compare (par/seq) got {max - err} out of {max} correct")

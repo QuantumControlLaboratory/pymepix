@@ -70,12 +70,14 @@ class UdpSampler(BasePipelineObject):
         self._last_update = time.time()
 
     def post_run(self):
+        packet = None
         if len(self._packet_buffer) > 1:
             packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
-        else:
+        elif len(self._packet_buffer) == 1:
             packet = np.frombuffer(self._packet_buffer[0], dtype=np.uint64)
 
-        self.pushOutput(MessageType.RawData, (packet, self._longtime.value))
+        if packet is not None:
+            self.pushOutput(MessageType.RawData, (packet, self._longtime.value))
 
     def get_useful_packets(self, packet):
         # Get the header
