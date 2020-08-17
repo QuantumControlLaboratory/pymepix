@@ -1,3 +1,9 @@
+This branch was intended to refactor rawtodisk as a process alike udpsampler and packetprocessor.
+Afterwards the option to have a parallel pipeline like udpsampler > (rawtodisk || (packetprocessors > centroiding))
+instead of sequential udpsampler > rawtodisk > packetprocessors > centroiding was introduced. 
+This was done to look for performance improvements. 
+Tests are already implemented.
+
 # Pymepix
 
 The `pymepix` Python module provides the control and data-acquisition (DAQ) functionality. It
