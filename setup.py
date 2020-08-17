@@ -22,7 +22,7 @@
 
 author = 'CFEL Controlled Molecule Imaging group'
 copyright = '2018–2020 CFEL-CMI <jochen.kuepper@cfel.de>'
-name = 'pymepix'
+name = 'pymepixold'
 version = '1.1.dev0'
 release = version
 
@@ -39,13 +39,13 @@ from distutils import log
 
 packages = find_packages(exclude=('tests', 'doc'))
 
-provides = ['pymepix', ]
+provides = ['pymepixold', ]
 
 requires = []
 
 install_requires = ['numpy', 'sklearn']
 
-console_scripts = ['pymepix-acq=pymepix.pymepix:main']
+console_scripts = ['pymepixold-acq=pymepixold.pymepixold:main']
 
 entry_points = {'console_scripts': console_scripts, }
 

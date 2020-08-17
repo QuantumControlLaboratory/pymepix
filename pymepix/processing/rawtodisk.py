@@ -39,9 +39,9 @@ class raw2Disk (BasePipelineObject):
         self.info(f'initialising {name}')
         if self.input_queue is not None:
             try:
-                # TODO: filename from args.output in pymepix
+                # TODO: filename from args.output in pymepixold
                 # possible: TimepixDevice.setupAcquisition() remove call in init
-                #           > higher level call from pymepix including all args
+                #           > higher level call from pymepixold including all args
                 self._raw_file = open_output_file(file_name, 'raw')
             except:
                 self.info(f'Cannot open file {file_name}')

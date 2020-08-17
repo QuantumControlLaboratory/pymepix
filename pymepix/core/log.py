@@ -30,7 +30,7 @@ __all__ = ['Logger', 'ProcessLogger']
 
 
 class PymepixLogger(object):
-    """Base class for logging in pymepix
+    """Base class for logging in pymepixold
 
     This class wraps logging functionality and provides them to the derived classes
     providing info,debug,critical, error and warning methods
@@ -78,12 +78,12 @@ class PymepixLogger(object):
 
     @classmethod
     def getLogger(cls, name):
-        return logging.getLogger('pymepix.{}'.format(name))
+        return logging.getLogger('pymepixold.{}'.format(name))
 
     @classmethod
     def reInit(cls):
         if cls._init is False:
-            cls._root_logger = logging.getLogger('pymepix')
+            cls._root_logger = logging.getLogger('pymepixold')
 
             cls._root_logger.info('Reinitializing PymepixLogger')
             cls._log_thread = threading.Thread(target=cls._logging_thread)
@@ -92,7 +92,7 @@ class PymepixLogger(object):
         cls._init = True
 
     def __init__(self, name):
-        self._log_name = 'pymepix.{}'.format(name)
+        self._log_name = 'pymepixold.{}'.format(name)
         PymepixLogger.reInit()
 
     @property

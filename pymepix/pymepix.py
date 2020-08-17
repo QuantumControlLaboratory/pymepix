@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-"""Main module for pymepix"""
+"""Main module for pymepixold"""
 
 import numpy as np
 from .SPIDR.spidrcontroller import SPIDRController
@@ -332,8 +332,9 @@ def main():
     logging.info('------Starting acquisition---------')
 
     while time.time() - start_time < total_time:
+        '''
         try:
-            data_type, data = pymepix.poll()
+            data_type, data = pymepixold.poll()
         except PollBufferEmpty:
             continue
         logging.debug('Datatype: {} Data:{}'.format(data_type, data))
@@ -346,6 +347,7 @@ def main():
         elif data_type is MessageType.PixelData:
             if args.decode and args.tof:
                 store_tof(output_file, data)
+        '''
 
     pymepix.stop()
 

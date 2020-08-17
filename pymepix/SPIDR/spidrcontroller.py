@@ -738,7 +738,7 @@ class SPIDRController(Logger):
 
 
         .. Warning::
-            This is the only tested mode for pymepix. It is recommended that this is enabled
+            This is the only tested mode for pymepixold. It is recommended that this is enabled
 
         """
         self.requestSetInt(SpidrCmds.CMD_DDRIVEN_READOUT, 0, 0)

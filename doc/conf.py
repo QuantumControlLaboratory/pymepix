@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# pymepix documentation build configuration file, created by
+# pymepixold documentation build configuration file, created by
 # sphinx-quickstart on Tue Nov 13 13:58:29 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -130,7 +130,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pymepix.tex', 'pymepix Documentation',
+    (master_doc, 'pymepixold.tex', 'pymepixold Documentation',
      author, 'manual'),
 ]
 
@@ -139,7 +139,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pymepix', 'pymepix Documentation',
+    (master_doc, 'pymepixold', 'pymepixold Documentation',
      [author], 1)
 ]
 
@@ -149,7 +149,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pymepix', 'pymepix Documentation',
-     author, 'pymepix', 'One line description of project.',
+    (master_doc, 'pymepixold', 'pymepixold Documentation',
+     author, 'pymepixold', 'One line description of project.',
      'Miscellaneous'),
 ]
