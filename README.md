@@ -1,4 +1,4 @@
-# Pymepix
+# Pymepix - Quick and Dirty adaption to the 10Gb Version
 
 The `pymepix` Python module provides the control and data-acquisition (DAQ) functionality. It
 directly interfaces with the Timepix hardware. Currently, it works with the SPIDR board.
