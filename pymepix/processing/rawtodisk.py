@@ -33,14 +33,22 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
         ProcessLogger.__init__(self, name)
 
         self.info(f'initialising {name}')
+
         if dataq is not None:
             self._dataq = dataq
-            try:
-                self._raw_file = open_output_file(fileN, 'raw')
-            except:
-                self.info(f'Cannot open file {fileN}')
         else:
             self.error('Exception occured in init; no data queue provided?')
+
+        self._fileN = fileN
+
+        # if dataq is not None:
+        #     self._dataq = dataq
+        #     try:
+        #         self._raw_file = open_output_file(fileN, 'raw')
+        #     except:
+        #         self.info(f'Cannot open file {fileN}')
+        # else:
+        #     self.error('Exception occured in init; no data queue provided?')
 
         self._buffer = np.array([], dtype=np.uint64)
         self._enable = Value(ctypes.c_bool, 1)
@@ -91,6 +99,16 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
         self._timerBool.value = int(value)
 
     def run(self):
+
+        if not self.enable:
+            if self._dataq is not None:
+                try:
+                    self._raw_file = open_output_file(self._fileN, 'raw')
+                except:
+                    self.info(f'Cannot open file {self._fileN}')
+            else:
+                self.error('Exception occured in init; no data queue provided?')
+
         while True:
             enabled = self.enable
             if not enabled:
@@ -125,7 +143,10 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
                     break
             print(f'{len(remains)} remains collected')
             store_raw(self._raw_file, (np.asarray(remains), 1))
-        self._raw_file.close()
+        try:
+            self._raw_file.close()
+        except:
+            pass
 
         # TODO: print only if in debug mode
         #size = np.fromfile(self._raw_file.name, dtype=np.uint64).shape[0]

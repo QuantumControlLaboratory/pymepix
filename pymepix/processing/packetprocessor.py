@@ -120,14 +120,50 @@ class PacketProcessor(BasePipelineObject):
         subheader = ((packet & 0x0F00000000000000) >> 56) & 0xF
 
         pixels = packet[np.logical_or(header == 0xA, header == 0xB)]
-        triggers = packet[np.logical_and(np.logical_or(header == 0x4, header == 0x6), subheader == 0xF)]
+        #triggers = packet[np.logical_and(np.logical_or(header == 0x4, header == 0x6), subheader == 0xF)]
 
-        if pixels.size > 0:
-            self.process_pixels(np.int64(pixels), longtime)
+        header = packet.astype(np.uint64) >> np.uint64(60)
+
+        triggers = packet[header == 0x6]
+
+        ## somwhere the TDC2 triggers are not sens to MessageType.RawData: but the TDC1 are
+
+        # for p in triggers:
+        #     if (np.uint64(p) >> np.uint64(56)) == 0x6f:
+        #         print("tdc1 rising edge is working")
+        #     elif (np.uint64(p) >> np.uint64(56)) == 0x6a:
+        #         print("tdc1 falling edge is working")
+        #     elif (np.uint64(p) >> np.uint64(56)) == 0x6e:
+        #         print("tdc2 rising edge is working")
+        #     elif (np.uint64(p) >> np.uint64(56)) == 0x6b:
+        #         print("tdc2 falling edge is working")
+
+
+
+        # for p in packets:
+        #     #np.uint64(5) << np.uint64(1)
+        #     int_packet = np.uint64(p) >> np.uint64(60)
+            
+        #     if int_packet == 0x6:
+        #         if (np.uint64(p) >> np.uint64(56)) == 0x6f:
+        #             print("tdc1 rising edge is working")
+        #         elif (np.uint64(p) >> np.uint64(56)) == 0x6a:
+        #             print("tdc1 falling edge is working")
+        #         elif (np.uint64(p) >> np.uint64(56)) == 0x6e:
+        #             print("tdc2 rising edge is working")
+        #         elif (np.uint64(p) >> np.uint64(56)) == 0x6b:
+        #             print("tdc2 falling edge is working")
+
+        # print("pixels.size ", pixels.size)
+        #print("triggers.size ", triggers.size)
+        #print(header, subheader)
 
         if triggers.size > 0:
             # print('triggers', triggers, longtime)
             self.process_triggers(np.int64(triggers), longtime)
+
+        if pixels.size > 0:
+            self.process_pixels(np.int64(pixels), longtime)
 
         if self._handle_events:
 
@@ -227,6 +263,10 @@ class PacketProcessor(BasePipelineObject):
         return globaltime
 
     def process_triggers(self, pixdata, longtime):
+
+
+        trig_type = np.uint64(pixdata) >> np.uint64(56)
+
         coarsetime = pixdata >> 12 & 0xFFFFFFFF
         coarsetime = self.correct_global_time(coarsetime, longtime)
         tmpfine = (pixdata >> 5) & 0xF
@@ -236,8 +276,8 @@ class PacketProcessor(BasePipelineObject):
         tdc_time = (coarsetime * 25E-9 + trigtime_fine * time_unit * 1E-9)
 
         m_trigTime = tdc_time
-
-        self.pushOutput(MessageType.TriggerData, m_trigTime)
+        #print(trig_type, m_trigTime)
+        self.pushOutput(MessageType.TriggerData, [trig_type, m_trigTime])
         # print(m_trigTime)
         if self._handle_events:
             if self._triggers is None:

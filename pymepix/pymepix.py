@@ -97,7 +97,7 @@ class Pymepix(Logger):
         self._data_queue = Queue()
         self._createTimepix()
         self._spidr.setBiasSupplyEnable(True)
-        self.biasVoltage = 50
+        self.biasVoltage = 40
         self.enablePolling()
         self._data_thread = threading.Thread(target=self.data_thread)
         self._data_thread.daemon = True
@@ -198,12 +198,34 @@ class Pymepix(Logger):
         for idx, tpx in enumerate(self._timepix_devices):
             self.info('Device {} - {}'.format(idx, tpx.devIdToString()))
 
+
+    def setTdcDisable(self, tdc, bits):
+        old = self._spidr.getSpidrReg(0x2B8)
+        val =  (old & 0xFFFFFFE1 | (bits & 0xF) << 1) if (tdc == 1) else (old & 0xFFE1FFFF | (bits & 0xF) << 17)
+        self._spidr.setSpidrReg(0x2B8,val)
+
+
+    def setTdcEdges(self, tdc, bits):
+        old = self._spidr.getSpidrReg(0x2B8)
+        val = (old & 0xFFFFFF9F | (bits & 0x3) << 5) if (tdc == 1) else (old & 0xFF9FFFFF | (bits & 0x3) << 21)
+        self._spidr.setSpidrReg(0x2B8,val)
+
     def _prepare(self):
+
         self._spidr.disableExternalRefClock()
-        TdcEnable = 0x0000
-        self._spidr.setSpidrReg(0x2B8, TdcEnable)
+        # TdcEnable = 0x0000
+        # self._spidr.setSpidrReg(0x2B8, TdcEnable)
+
+        self.setTdcDisable(1, 0)
+        self.setTdcEdges(1, 0)
+        self.setTdcDisable(2, 0)
+        self.setTdcEdges(2, 0)
+
+        #print('Prepare !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', self._spidr.getSpidrReg(0x2B8))
+
         self._spidr.enableDecoders(True)
         self._spidr.datadrivenReadout()
+
 
     def start(self):
         """Starts acquisition"""

@@ -76,7 +76,10 @@ class UdpSampler(BasePipelineObject):
 
     def post_run(self):
         if len(self._packet_buffer) > 1:
-            packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
+            #print("Debug: ", len(self._packet_buffer))
+            packet = np.frombuffer(self._packet_buffer, dtype=np.uint64)
+            #packet = np.frombuffer(b''.join(self._packet_buffer), dtype=np.uint64)
+            #print("Debug1: ", len(packet))
         else:
             packet = np.frombuffer(self._packet_buffer[0], dtype=np.uint64)
         if packet.size > 0:
