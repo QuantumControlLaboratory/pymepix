@@ -21,7 +21,9 @@
 """Module deals with managing processing objects to form a data pipeline"""
 
 from pymepix.core.log import Logger
-from multiprocessing import Queue
+from pathos.helpers import mp as multiprocessing
+#from multiprocessing import Queue
+Queue = multiprocessing.Queue
 
 
 class AcquisitionStage(Logger):
@@ -262,6 +264,7 @@ def main():
     import time
     from pymepix.processing.udpsampler import UdpSampler
     from pymepix.processing.packetprocessor import PacketProcessor
+    from pathos.helpers import mp as multiprocessing
     from multiprocessing.sharedctypes import Value
     import threading
     # Create the logger

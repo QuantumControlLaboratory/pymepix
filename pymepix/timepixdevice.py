@@ -26,6 +26,7 @@ from .config import TimepixConfig, SophyConfig, DefaultConfig
 # from .config.sophyconfig import SophyConfig
 from .core.log import Logger
 from .processing.acquisition import PixelPipeline
+from pathos.helpers import mp as multiprocessing
 from multiprocessing.sharedctypes import Value
 import time
 import threading
@@ -596,6 +597,7 @@ def main():
     import logging
     from .SPIDR.spidrcontroller import SPIDRController
     from .SPIDR.spidrdefs import SpidrShutterMode
+    from pathos.helpers import mp as multiprocessing
     from multiprocessing import Queue
     logging.basicConfig(level=logging.INFO)
     end_queue = Queue()

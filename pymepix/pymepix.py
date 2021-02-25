@@ -25,7 +25,9 @@ from .SPIDR.spidrcontroller import SPIDRController
 from .SPIDR.spidrdefs import SpidrReadoutSpeed
 from pymepix.core.log import Logger
 from .timepixdevice import TimepixDevice
-from multiprocessing import Queue
+from pathos.helpers import mp as multiprocessing
+#from multiprocessing import Queue
+Queue = multiprocessing.Queue
 from collections import deque
 import threading
 import time
@@ -199,27 +201,14 @@ class Pymepix(Logger):
             self.info('Device {} - {}'.format(idx, tpx.devIdToString()))
 
 
-    def setTdcDisable(self, tdc, bits):
-        old = self._spidr.getSpidrReg(0x2B8)
-        val =  (old & 0xFFFFFFE1 | (bits & 0xF) << 1) if (tdc == 1) else (old & 0xFFE1FFFF | (bits & 0xF) << 17)
-        self._spidr.setSpidrReg(0x2B8,val)
 
-
-    def setTdcEdges(self, tdc, bits):
-        old = self._spidr.getSpidrReg(0x2B8)
-        val = (old & 0xFFFFFF9F | (bits & 0x3) << 5) if (tdc == 1) else (old & 0xFF9FFFFF | (bits & 0x3) << 21)
-        self._spidr.setSpidrReg(0x2B8,val)
 
     def _prepare(self):
 
         self._spidr.disableExternalRefClock()
-        # TdcEnable = 0x0000
-        # self._spidr.setSpidrReg(0x2B8, TdcEnable)
+        TdcEnable = 0x0000
+        self._spidr.setSpidrReg(0x2B8, TdcEnable)
 
-        self.setTdcDisable(1, 0)
-        self.setTdcEdges(1, 0)
-        self.setTdcDisable(2, 0)
-        self.setTdcEdges(2, 0)
 
         #print('Prepare !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', self._spidr.getSpidrReg(0x2B8))
 

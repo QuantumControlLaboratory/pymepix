@@ -18,7 +18,9 @@
 # You should have received a copy of the GNU General Public License along with this program. If not,
 # see <https://www.gnu.org/licenses/>.
 import ctypes
-from multiprocessing import Queue
+from pathos.helpers import mp as multiprocessing
+#from multiprocessing import Queue
+Queue = multiprocessing.Queue
 from multiprocessing.sharedctypes import Value
 import numpy as np
 import socket

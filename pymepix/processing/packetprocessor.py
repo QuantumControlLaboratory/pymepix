@@ -24,6 +24,7 @@ from .datatypes import MessageType
 import time
 import numpy as np
 from enum import IntEnum
+from pathos.helpers import mp as multiprocessing
 from multiprocessing.sharedctypes import Value
 
 

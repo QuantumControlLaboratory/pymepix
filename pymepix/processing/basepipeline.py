@@ -21,8 +21,10 @@
 """Base implementation of objects relating to the processing pipeline"""
 
 from pymepix.core.log import ProcessLogger
-import multiprocessing
-from multiprocessing import Queue
+from pathos.helpers import mp as multiprocessing
+#import multiprocessing
+#from multiprocessing import Queue
+Queue = multiprocessing.Queue
 import traceback
 from multiprocessing.sharedctypes import Value
 import time

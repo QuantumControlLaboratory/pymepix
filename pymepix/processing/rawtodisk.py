@@ -20,7 +20,9 @@
 import time
 import numpy as np
 from pymepix.core.log import ProcessLogger
-import multiprocessing
+
+from pathos.helpers import mp as multiprocessing
+#import multiprocessing
 from multiprocessing.sharedctypes import Value
 import queue
 from pymepix.util.storage import open_output_file, store_raw
@@ -162,6 +164,7 @@ class raw2Disk (multiprocessing.Process, ProcessLogger):
 
 def main():
     import numpy as np
+    from pathos.helpers import mp as multiprocessing
     from multiprocessing import Queue
     import logging
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
